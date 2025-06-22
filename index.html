@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>واحة العلم: جامعة قناة السويس</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Desert Sands & Papyrus with inviting accents -->
+    <!-- Application Structure Plan: A multi-scene interactive narrative for marketing. Starts with a hero section, then proceeds through sequential story scenes. Each scene has text, emoji, dynamically changing background colors, and subtle ambient sounds (Tone.js). LLM integration includes an "Inspirational Question" for scene reflection and a "Personalized Welcome Message" at the end of the story. A final call to action section. Controls for background music/ambient sounds. -->
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #FDF8F0;
+            color: #4E4234;
+            transition: background-color 1.5s ease-in-out; /* Smooth transition for background changes */
+        }
+        .bg-primary { background-color: #FDF8F0; }
+        .bg-secondary { background-color: #F5EFE1; }
+        .text-primary { color: #4E4234; }
+        .text-accent { color: #8D6B4C; }
+        .bg-accent { background-color: #D4A056; }
+        .bg-accent-hover:hover { background-color: #C08C3B; }
+        .shadow-custom { 
+            box-shadow: 0 10px 30px -5px rgba(141, 107, 76, 0.15), 0 6px 12px -6px rgba(141, 107, 76, 0.1); 
+        }
+        .text-shadow-light {
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #D4A056;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .mood-ancient { background-color: #D2B48C; } /* Tan/Desert color */
+        .mood-oasis-birth { background-color: #A2D9CE; } /* Light teal/greenish blue */
+        .mood-strategic { background-color: #ECC8AF; } /* Light peach/gold */
+        .mood-transformation { background-color: #ADD8E6; } /* Light blue */
+        .mood-resilience { background-color: #FFDAB9; } /* Peach puff / warm tone */
+        .mood-academic { background-color: #F0E68C; } /* Khaki / light yellow */
+
+        /* Animations for visual dazzle */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .animate-pulse-once {
+            animation: pulse 1s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-primary">
+    <nav class="sticky top-0 z-50 bg-primary/80 backdrop-blur-md shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold text-accent text-shadow-light">واحة العلم</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4 space-x-reverse">
+                        <a href="#story-container" class="text-primary hover:text-accent px-3 py-2 rounded-md text-sm font-medium">القصة</a>
+                        <a href="#student-benefits" class="text-primary hover:text-accent px-3 py-2 rounded-md text-sm font-medium">للطلاب الوافدين</a>
+                        <a href="#call-to-action" class="text-primary hover:text-accent px-3 py-2 rounded-md text-sm font-medium">انضم إلينا</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <section id="story-container" class="min-h-screen flex flex-col items-center justify-center p-4 py-16 transition-colors duration-1000 ease-in-out mood-ancient">
+            <div class="max-w-4xl w-full bg-secondary p-8 rounded-xl shadow-custom text-center">
+                <h1 id="story-title" class="text-4xl md:text-5xl font-bold text-accent leading-tight mb-6 text-shadow-light"></h1>
+                <p id="story-text" class="mt-6 text-lg md:text-xl text-primary leading-relaxed"></p>
+                <div class="mt-6 text-5xl">
+                    <span id="story-icon"></span>
+                </div>
+
+                <div id="ai-response-area" class="mt-6 p-4 bg-primary rounded-lg shadow-inner text-primary hidden">
+                    <div class="loading-spinner hidden"></div>
+                    <p id="ai-response-text" class="leading-relaxed"></p>
+                </div>
+                
+                <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <button id="prev-scene-btn" class="bg-accent text-white font-bold py-3 px-8 rounded-full text-lg bg-accent-hover transition-all duration-300 transform hover:scale-105 opacity-50 cursor-not-allowed">
+                        المشهد السابق
+                    </button>
+                    <button id="next-scene-btn" class="bg-accent text-white font-bold py-3 px-8 rounded-full text-lg bg-accent-hover transition-all duration-300 transform hover:scale-105">
+                        المشهد التالي
+                    </button>
+                </div>
+                <div class="mt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <span class="text-primary"><span id="current-scene-indicator">1</span> / <span id="total-scenes-indicator"></span></span>
+                    <button id="read-text-btn" class="bg-accent text-white font-bold py-2 px-6 rounded-full text-sm bg-accent-hover transition-all duration-300">
+                        قراءة النص 🔊
+                    </button>
+                </div>
+                <div class="mt-6">
+                    <button id="inspire-me-btn" class="bg-accent text-white font-bold py-2 px-6 rounded-full text-sm bg-accent-hover transition-all duration-300">
+                        تساؤل إلهامي ✨
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="student-benefits" class="py-20 bg-primary">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-3xl font-bold text-accent mb-8 text-shadow-light">لماذا تختار واحتنا؟</h2>
+                <p class="text-lg text-primary max-w-2xl mx-auto mb-10">في جامعة قناة السويس، نحن ندرك أن رحلتك التعليمية تتجاوز الفصول الدراسية. هنا، ستجد بيئةً تحتضنُكَ وتُوفرُ لكَ كلَّ ما تحتاجُهُ لِتزدهرَ إنسانياً وأكاديمياً.</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="bg-secondary p-6 rounded-xl shadow-custom transform hover:-translate-y-2 transition-transform duration-300">
+                        <span class="text-5xl mb-4 block">💖</span>
+                        <h3 class="text-xl font-bold text-accent mb-2">الشعور بالانتماء</h3>
+                        <p class="text-primary">مرحباً بك في أسرتنا! مجتمعنا الدافئ والودود يجعلك تشعر وكأنك في بيتك، بعيداً عن الغربة.</p>
+                    </div>
+                    <div class="bg-secondary p-6 rounded-xl shadow-custom transform hover:-translate-y-2 transition-transform duration-300">
+                        <span class="text-5xl mb-4 block">🛡️</span>
+                        <h3 class="text-xl font-bold text-accent mb-2">الأمان والطمأنينة</h3>
+                        <p class="text-primary">نحن نعدك ببيئة آمنة ومستقرة، حيث يمكنك التركيز على دراستك وتجاربك دون قلق.</p>
+                    </div>
+                    <div class="bg-secondary p-6 rounded-xl shadow-custom transform hover:-translate-y-2 transition-transform duration-300">
+                        <span class="text-5xl mb-4 block">😊</span>
+                        <h3 class="text-xl font-bold text-accent mb-2">الترحيب والضيافة</h3>
+                        <p class="text-primary">مدينتنا وجامعتنا تعرفان كيف تبتسمان وتستقبلان الزوار. شعارنا: "ابتسم.. أنت في حضرتي!".</p>
+                    </div>
+                </div>
+                <div class="mt-10">
+                    <button id="get-welcome-message-btn" class="bg-accent text-white font-bold py-3 px-8 rounded-full text-lg bg-accent-hover transition-all duration-300 transform hover:scale-105">
+                        احصل على رسالة ترحيب مخصصة ✨
+                    </button>
+                    <div id="welcome-message-output" class="mt-6 p-4 bg-secondary rounded-lg shadow-inner text-primary hidden">
+                        <div class="loading-spinner hidden"></div>
+                        <p></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="call-to-action" class="py-20 bg-secondary text-center">
+            <div class="max-w-3xl mx-auto px-4">
+                <h2 class="text-3xl font-bold text-accent mb-6 text-shadow-light">قصتك تبدأ هنا!</h2>
+                <p class="text-lg text-primary mb-8">جامعة قناة السويس ليست مجرد مكان للدراسة، إنها واحتك الجديدة التي ستنمو فيها وتزدهر. انضم إلى عائلتنا!</p>
+                <a href="#" class="bg-accent text-white font-bold py-3 px-8 rounded-full text-lg bg-accent-hover transition-all duration-300 transform hover:scale-105">
+                    اكتشف برامجنا وسجل الآن
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-primary">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-primary">
+            <p>&copy; 2025 واحة العلم: جامعة قناة السويس. جميع الحقوق محفوظة.</p>
+        </div>
+    </footer>
+
+    <div class="fixed bottom-4 left-4 bg-secondary p-3 rounded-full shadow-lg flex items-center space-x-2 z-50">
+        <button id="toggle-music" class="text-accent text-xl focus:outline-none">
+            🎶
+        </button>
+        <button id="toggle-ambient-sound" class="text-accent text-xl focus:outline-none">
+            🍃
+        </button>
+    </div>
+
+    <script>
+        const storyScenes = [
+            {
+                title: "مِنْ رَحِمِ التاريخِ وُلِدَتْ هُويَّتِي!",
+                text: "أنا التي وُلِدْتُ هنا؛ على هذه الأرضِ. ولِيِ عديدٌ من الأسماءِ.",
+                icon: "⏳",
+                mood: "mood-ancient"
+            },
+            {
+                title: "واحةٌ من رمالٍ وماءٍ",
+                text: "في غابر التاريخ، وفي لحظةٍ ما، تلاقت مياه النيل مع بحيرةٍ مُرَّة. فتشبعت رِمالِيِ الصفراء مَاَءً مالحًا عذبًا! ثم فاضَتْ تُرْبَتِي مِنَ الثَمَراتِ أَشْجَارًا، واستحالت الأرضُ؛ باتحاد الأشجارِ المثمرات، مع ما عداها من شجرٍ كثيفٍ، إلى ما يشبه الواحة! كان موقعُ قدميَّ مُذهلًا! كُنتُ في الملتقى تمامًا، بين أرض الشام وأرض مصر! على الحدود من سيناء المباركة!",
+                icon: "🌊🌳",
+                mood: "mood-oasis-birth"
+            },
+            {
+                title: "بوابةُ الحضاراتِ وملتقى التجارةِ",
+                text: "كُنتُ كالبوابةِ التي يَمُرُّ منها قاصدِ هذه البلاد، أو تلك! وكذلك؛ لو نَظَرْتَ هناك، وأمعنتَ النَظَرْ؛ لَوَجَدْتَنِي في مُنْتَصَفِ طَريقِ تجارةٍ؛ ما بين بَحْرَينِ؛ بلَونَينِ، أحمرٍ وأبيضِ! كان موقِعِي مثاليًا! في الواقع؛ كان عبقريًا! أنا صحراءُ من جهاتي الأربع! وفي المنتصف تمامًا، أنا واحةٍ للراحة! كم استقْبَلْتُ مَارًّا من هنا! مُتَّجِرًا كان؛ أو عابرُ سبيلِ؟ كم من ملوك الأرضِ مرُّوا من هنا؛ غازينَ، أو فاتحينَ؟ كم من الصالحينَ! أنا هنا منذ أصبح التاريخ صُبحًا. وهُويَّتِي هي الأرضُ. أنا واحة! ولِيِ عديدٌ من الأسماءِ.",
+                icon: "🗺️🕌",
+                mood: "mood-strategic"
+            },
+            {
+                title: "تغيراتُ العصرِ وقناةُ السويسِ",
+                text: "في عصركم هذا! دعاني مَلِكًا من ملوكِ مصر باسمه. وَاحَتُهُ؛ يقصد! ومنذ أن دعاني باسمه؛ أصبَحتُ واحةُ كُلِّ مَنْ مَلَكَ بَعْدَهُ. إلا أنه قد طَرَأَنِي بعض التغير! إذ حجزت قناةٍ؛ شُقَّتْ ما بين بَحْرَينِ، إلى إختلافٍ في طبيعتِيِ. لم أعُد أرى سيناء الحبيبة كما اعتدْت أن أراها سابقًا! حتى قوافل التجار التي كانت كثيرًا ما تستريحُ تحتَ أشجاري؛ استبدلتْ سفينة الصحراء بسفينةٍ أخرى تحملُ بضائعَهم على الماء! لكني كنت قد بدأت أستحيل بالفعل إلى مدينةٍ، وقد استقر المُقام ببعض من الأغراب، بيضَ الوجوه شقرًا، في رحابي. يديرون شئون القناةِ التي شُقَّت على وجهي! وانضم بعض أهل مصر من الزُرَّاعِ يفلحون تُربَتي؛ وللعجبِ، أنتجت أرضي أشهى الفاكهة وأخرجت بحيراتي أشهر الأسماك!",
+                icon: "🚢🏙️",
+                mood: "mood-transformation"
+            },
+            {
+                title: "الترحيبُ والصمودُ: هُويَّتِي",
+                text: "كم أحبُّ هُويَّتِي! أنا دومًا مُرَحِبه. أحب الابتسام. حتى إن شعاري الذي استقبل به الزوار يبدأ به. ابتسم.. أنت في حضرتي! ثم عانيتُ ويلات الحروب؛ لكني صمدت! بل أني أذكر لحظة عبورِ كتائب الإيمان، تسترد لعيني، سيناء الحبيبة! لحظة دحرنا المعتدي الغازي.",
+                icon: "😊🛡️",
+                mood: "mood-resilience"
+            },
+            {
+                title: "جامعةُ قناةِ السويس: منارةُ العلمِ",
+                text: "من بعدها؛ بدأ البناء على نصرٍ أتى. فنبتت بأحشائي منارة العلم التي، أفخر بها، وما تغرسه من وعي! أقدم إليكم؛ جامعة قناة السويس! منارة العلم.",
+                icon: "🎓💡",
+                mood: "mood-academic"
+            }
+        ];
+
+        let currentSceneIndex = 0;
+        const storyContainer = document.getElementById('story-container');
+        const storyTitle = document.getElementById('story-title');
+        const storyText = document.getElementById('story-text');
+        const storyIcon = document.getElementById('story-icon');
+        const prevSceneBtn = document.getElementById('prev-scene-btn');
+        const nextSceneBtn = document.getElementById('next-scene-btn');
+        const readTextBtn = document.getElementById('read-text-btn'); // New button element
+        const currentSceneIndicator = document.getElementById('current-scene-indicator');
+        const totalScenesIndicator = document.getElementById('total-scenes-indicator');
+        const inspireMeBtn = document.getElementById('inspire-me-btn');
+        const aiResponseArea = document.getElementById('ai-response-area');
+        const aiResponseText = document.getElementById('ai-response-text');
+        const loadingSpinner = aiResponseArea.querySelector('.loading-spinner');
+        const getWelcomeMessageBtn = document.getElementById('get-welcome-message-btn');
+        const welcomeMessageOutput = document.getElementById('welcome-message-output');
+        const welcomeMessageText = welcomeMessageOutput.querySelector('p');
+        const welcomeMessageSpinner = welcomeMessageOutput.querySelector('.loading-spinner');
+
+        let currentUtterance = null; // To store the SpeechSynthesisUtterance object
+
+        // Tone.js setup for background music
+        let backgroundSynth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: "sine" }, // Smooth sine wave for ambient music
+            envelope: { attack: 3, decay: 1, sustain: 0.7, release: 5 }
+        }).toDestination();
+        backgroundSynth.volume.value = -18;
+
+        let musicLoop;
+        let isMusicPlaying = false;
+
+        function startMusic() {
+            if (!musicLoop) {
+                const chords = [
+                    ["C4", "E4", "G4"], // C Major
+                    ["F4", "A4", "C5"], // F Major
+                    ["G4", "B4", "D5"], // G Major
+                    ["A3", "C4", "E4"]  // A minor (lower octave for harmony)
+                ];
+                let chordIndex = 0;
+                musicLoop = new Tone.Loop(time => {
+                    backgroundSynth.triggerAttackRelease(chords[chordIndex % chords.length], "4n", time); // Longer notes
+                    chordIndex++;
+                }, "2n").start(0); // Play a chord every 2 beats
+            }
+            Tone.Transport.start();
+            isMusicPlaying = true;
+            document.getElementById('toggle-music').textContent = '🎶';
+        }
+
+        function stopMusic() {
+            Tone.Transport.stop();
+            Tone.Transport.cancel();
+            backgroundSynth.releaseAll();
+            musicLoop = null;
+            isMusicPlaying = false;
+            document.getElementById('toggle-music').textContent = '🔇';
+        }
+
+        document.getElementById('toggle-music').addEventListener('click', async () => {
+            await Tone.start();
+            if (isMusicPlaying) {
+                stopMusic();
+            } else {
+                startMusic();
+            }
+        });
+
+        // Tone.js setup for ambient sound
+        let ambientSynth = new Tone.NoiseSynth({
+            envelope: {
+                attack: 0.05,
+                decay: 0.5,
+                sustain: 0.5,
+                release: 1
+            }
+        }).toDestination();
+        ambientSynth.volume.value = -30; // Very low volume for ambient
+        let ambientNoiseLoop;
+        let isAmbientSoundPlaying = false;
+
+        function startAmbientSound(type = 'wind') {
+            if (!ambientNoiseLoop) {
+                ambientNoiseLoop = new Tone.Loop(time => {
+                    if (type === 'wind') {
+                        ambientSynth.triggerAttackRelease("4n", time, Math.random() * 0.2 + 0.8); // Subtle wind
+                    } else if (type === 'water') {
+                        ambientSynth.triggerAttackRelease("8n", time, Math.random() * 0.1 + 0.9); // Water ripples
+                    } else if (type === 'city') {
+                        ambientSynth.triggerAttackRelease("16n", time, Math.random() * 0.05 + 0.95); // Very faint city hum
+                    } else if (type === 'birds') {
+                         ambientSynth.triggerAttackRelease("16n", time, Math.random() * 0.1 + 0.9);
+                    }
+                }, "1n").start(0); // Trigger a sound every beat
+            }
+            Tone.Transport.start();
+            isAmbientSoundPlaying = true;
+            document.getElementById('toggle-ambient-sound').textContent = '🍃';
+        }
+
+        function stopAmbientSound() {
+            Tone.Transport.stop();
+            Tone.Transport.cancel();
+            // NoiseSynth does not have `releaseAll` or `triggerRelease` for stopping continuous sound
+            // A simple way to stop it is to disconnect it.
+            // However, a better approach for continuous ambient sounds is to just stop the loop.
+            if (ambientNoiseLoop) {
+                ambientNoiseLoop.stop();
+                ambientNoiseLoop = null;
+            }
+            isAmbientSoundPlaying = false;
+            document.getElementById('toggle-ambient-sound').textContent = '🔇';
+        }
+
+        document.getElementById('toggle-ambient-sound').addEventListener('click', async () => {
+            await Tone.start();
+            if (isAmbientSoundPlaying) {
+                stopAmbientSound();
+            } else {
+                // Default to wind if no specific type is passed
+                startAmbientSound('wind');
+            }
+        });
+
+        // Function to update the scene content and mood
+        function updateScene() {
+            const scene = storyScenes[currentSceneIndex];
+            storyContainer.classList.remove(...Array.from(storyContainer.classList).filter(c => c.startsWith('mood-')));
+            storyContainer.classList.add(scene.mood);
+
+            storyTitle.textContent = scene.title;
+            storyText.textContent = scene.text;
+            storyIcon.textContent = scene.icon;
+            storyIcon.classList.add('animate-pulse-once'); // Add pulse animation when scene updates
+            storyIcon.addEventListener('animationend', () => {
+                storyIcon.classList.remove('animate-pulse-once'); // Remove animation class after it ends
+            }, { once: true });
+
+
+            // Update navigation buttons
+            prevSceneBtn.disabled = currentSceneIndex === 0;
+            prevSceneBtn.classList.toggle('opacity-50', currentSceneIndex === 0);
+            prevSceneBtn.classList.toggle('cursor-not-allowed', currentSceneIndex === 0);
+
+            nextSceneBtn.disabled = currentSceneIndex === storyScenes.length - 1;
+            nextSceneBtn.classList.toggle('opacity-50', currentSceneIndex === storyScenes.length - 1);
+            nextSceneBtn.classList.toggle('cursor-not-allowed', currentSceneIndex === storyScenes.length - 1);
+
+            currentSceneIndicator.textContent = currentSceneIndex + 1;
+            totalScenesIndicator.textContent = storyScenes.length;
+
+            // Hide AI response area when scene changes
+            aiResponseArea.classList.add('hidden');
+            aiResponseText.textContent = '';
+            welcomeMessageOutput.classList.add('hidden'); // Hide welcome message if visible
+            welcomeMessageText.textContent = '';
+
+            // Stop any ongoing speech when scene changes
+            if (window.speechSynthesis.speaking) {
+                window.speechSynthesis.cancel();
+            }
+
+            // Stop current ambient sound and potentially start a new one based on mood
+            if (isAmbientSoundPlaying) {
+                stopAmbientSound(); // Stop existing loop first
+            }
+
+            // Start new ambient sound based on the scene's mood/content
+            if (scene.mood === 'mood-oasis-birth') {
+                startAmbientSound('water'); // Gentle water sounds for oasis birth
+            } else if (scene.mood === 'mood-strategic') {
+                startAmbientSound('wind'); // Wind sounds for trade routes
+            } else if (scene.mood === 'mood-transformation') {
+                startAmbientSound('city'); // Subtle city hum for modernization
+            } else {
+                // If no specific ambient sound for this mood, ensure it's stopped.
+                stopAmbientSound(); 
+            }
+        }
+
+        prevSceneBtn.addEventListener('click', () => {
+            if (currentSceneIndex > 0) {
+                currentSceneIndex--;
+                updateScene();
+            }
+        });
+
+        nextSceneBtn.addEventListener('click', () => {
+            if (currentSceneIndex < storyScenes.length - 1) {
+                currentSceneIndex++;
+                updateScene();
+            }
+        });
+
+        // Text-to-Speech functionality
+        readTextBtn.addEventListener('click', () => {
+            if ('speechSynthesis' in window) {
+                if (window.speechSynthesis.speaking) {
+                    window.speechSynthesis.cancel(); // Stop current speech
+                } else {
+                    const textToSpeak = storyText.textContent;
+                    currentUtterance = new SpeechSynthesisUtterance(textToSpeak);
+                    currentUtterance.lang = 'ar-SA'; // Set language to Arabic (Saudi Arabia)
+                    
+                    // Attempt to find a suitable female voice
+                    const voices = window.speechSynthesis.getVoices();
+                    let femaleVoice = voices.find(voice => 
+                        voice.lang.startsWith('ar') && (voice.name.includes('female') || voice.name.includes('Female') || voice.name.includes('Ar-') || voice.name.includes('Arabic'))
+                    );
+
+                    // Fallback to any female voice if specific Arabic female voice not found
+                    if (!femaleVoice) {
+                        femaleVoice = voices.find(voice => voice.gender === 'female' || voice.name.includes('female') || voice.name.includes('Female'));
+                    }
+
+                    // Fallback to any Arabic voice if no female voice found
+                    if (!femaleVoice) {
+                        femaleVoice = voices.find(voice => voice.lang.startsWith('ar'));
+                    }
+
+                    // Assign the found voice, or let browser pick default if none found
+                    if (femaleVoice) {
+                        currentUtterance.voice = femaleVoice;
+                    }
+
+                    window.speechSynthesis.speak(currentUtterance);
+                }
+            } else {
+                alert('عذراً، متصفحك لا يدعم خاصية قراءة النص.');
+            }
+        });
+
+
+        // Gemini API calls
+        async function callGeminiAPI(prompt, outputElement, spinnerElement) {
+            outputElement.classList.remove('hidden');
+            outputElement.classList.remove('animate-fadeIn'); // Reset animation
+            outputElement.querySelector('p').textContent = '';
+            spinnerElement.classList.remove('hidden');
+
+            const apiKey = "AIzaSyBt3W-fHQ-PPQBTPNlvKrC-XdVt_hz97QI"; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+            const payload = { contents: chatHistory };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    outputElement.querySelector('p').textContent = result.candidates[0].content.parts[0].text;
+                    outputElement.classList.add('animate-fadeIn'); // Apply fade-in after content is loaded
+                } else {
+                    outputElement.querySelector('p').textContent = 'تعذر توليد الرد. حاول مرة أخرى.';
+                }
+            } catch (error) {
+                console.error('Error calling Gemini API:', error);
+                outputElement.querySelector('p').textContent = 'حدث خطأ أثناء الاتصال بالنموذج. حاول مرة أخرى.';
+            } finally {
+                spinnerElement.classList.add('hidden');
+            }
+        }
+
+        inspireMeBtn.addEventListener('click', () => {
+            const currentStoryText = storyScenes[currentSceneIndex].text;
+            const prompt = `بناءً على هذا الجزء من قصة المدينة: "${currentStoryText}"، استخرج سؤالاً تأملياً عميقاً يلهم الطلاب الوافدين للتفكير في العلاقة بين التاريخ، الهوية، ودورهم كجزء من هذه القصة. اجعل السؤال باللغة العربية الفصحى ومباشرة.`;
+            callGeminiAPI(prompt, aiResponseArea, loadingSpinner);
+        });
+
+        getWelcomeMessageBtn.addEventListener('click', () => {
+            const prompt = `اكتب رسالة ترحيبية قصيرة ومُلهمة لطالب وافد جديد في جامعة قناة السويس، مستلهماً من روح قصة المدينة (الإسماعيلية) التي تتميز بالترحيب، الأمان، التاريخ، والعلم (منارة العلم)، وكيف يمكن للطالب أن يجد فيها الانتماء والنمو. ركز على الجوانب الإنسانية والعواطف. اجعل الرسالة باللغة العربية الفصحى الفصحى وبأسلوب دافئ ومباشر.`;
+            callGeminiAPI(prompt, welcomeMessageOutput, welcomeMessageSpinner);
+        });
+
+
+        // Initial setup
+        window.onload = function() {
+            updateScene();
+            // Start background music by default, user can toggle off
+            startMusic(); 
+            // Smooth scroll for nav links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+             // Ensure voices are loaded before trying to set them
+            window.speechSynthesis.onvoiceschanged = () => {
+                // You might re-run updateScene if you want to ensure the voice is set immediately on load
+                // or just ensure the readTextBtn works correctly after voices are loaded.
+            };
+        };
+    </script>
+</body>
+</html>
